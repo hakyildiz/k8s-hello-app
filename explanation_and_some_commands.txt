@@ -1,0 +1,177 @@
+## environment Windows
+## docker desktop installed
+## minikube installed
+
+## target: 
+## Deploy helloapp gcr.io/google-samples/hello-app:2.0 to your cluster. 
+## Expose the service and test it with the curl request: curl http://<ip address of exposed service>:8080.
+
+## hello-app deployed by using yaml-file with deployment/replicas
+## LoadBalancer service used
+## another pod/container created with yaml file to test with curl command
+
+## yaml file name for deployment: hello_app_deployment.yaml
+## deployment replicaset, image: gcr.io/google-samples/hello-app:2.0
+## yaml file name for LB service : hello_app_serviceLB.yaml
+
+PS C:\Users\anil\k8sTrials>minikube start
+
+PS C:\Users\anil\k8sTrials> kubectl apply -f .\hello_app_deployment.yaml
+deployment.apps/hello-app-deployment created
+
+PS C:\Users\anil\k8sTrials> kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+hello-app-deployment-76f778987d-kpdd4   1/1     Running   0          7s
+hello-app-deployment-76f778987d-tbmlf   1/1     Running   0          7s
+hello-app-deployment-76f778987d-wn544   1/1     Running   0          7s
+PS C:\Users\anil\k8sTrials>
+
+PS C:\Users\anil\k8sTrials> kubectl describe pods hello-app-deployment-76f778987d-kpdd4
+Name:         hello-app-deployment-76f778987d-kpdd4
+Namespace:    default
+Priority:     0
+Node:         minikube/192.168.49.2
+Start Time:   Wed, 15 Sep 2021 21:47:05 +0300
+Labels:       app=hello-app
+              pod-template-hash=76f778987d
+Annotations:  <none>
+Status:       Running
+IP:           172.17.0.3
+IPs:
+  IP:           172.17.0.3
+Controlled By:  ReplicaSet/hello-app-deployment-76f778987d
+Containers:
+  hello-app:
+    Container ID:   docker://c709fece42192c0321c93bfeeba68c65fa260edbe59ba98358271a441544aa99
+    Image:          gcr.io/google-samples/hello-app:2.0
+    Image ID:       docker-pullable://gcr.io/google-samples/hello-app@sha256:47c784943382f2b318300b9dd75fc6f9599f05cfab674151a46597a9ec99f0ae
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Wed, 15 Sep 2021 21:47:07 +0300
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-bg7sf (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             True
+  ContainersReady   True
+  PodScheduled      True
+Volumes:
+  kube-api-access-bg7sf:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  32s   default-scheduler  Successfully assigned default/hello-app-deployment-76f778987d-kpdd4 to minikube
+  Normal  Pulled     30s   kubelet            Container image "gcr.io/google-samples/hello-app:2.0" already present on machine
+  Normal  Created    30s   kubelet            Created container hello-app
+  Normal  Started    30s   kubelet            Started container hello-app
+  
+PS C:\Users\anil\k8sTrials> kubectl port-forward hello-app-deployment-76f778987d-kpdd4 8000:8080
+Forwarding from 127.0.0.1:8000 -> 8080
+Forwarding from [::1]:8000 -> 8080
+Handling connection for 8000
+Handling connection for 8000
+
+## Tested via web_browser GUI after port forwarding
+## Saw the page opened
+
+http://127.0.0.1:8000/
+Hello, world!
+Version: 2.0.0
+Hostname: hello-app-deployment-76f778987d-kpdd4
+
+PS C:\Users\anil\k8sTrials> curl http://127.0.0.1:8000
+
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : Hello, world!
+                    Version: 2.0.0
+                    Hostname: hello-app-deployment-76f778987d-kpdd4
+
+RawContent        : HTTP/1.1 200 OK
+                    Content-Length: 77
+                    Content-Type: text/plain; charset=utf-8
+                    Date: Thu, 16 Sep 2021 10:44:27 GMT
+
+                    Hello, world!
+                    Version: 2.0.0
+                    Hostname: hello-app-deployment-76f778987d-kpdd4
+
+Forms             : {}
+Headers           : {[Content-Length, 77], [Content-Type, text/plain; charset=utf-8], [Date, Thu, 16 Sep 2021 10:44:27
+                    GMT]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 77
+
+
+## start LB service
+PS C:\Users\anil\k8sTrials> kubectl apply -f .\hello_app_serviceLB.yaml
+service/helloapplb created
+
+PS C:\Users\anil\k8sTrials> kubectl get service
+
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+helloapp     LoadBalancer   10.102.39.12   <pending>     8080:31209/TCP   5m27s
+kubernetes   ClusterIP      10.96.0.1      <none>        443/TCP          19m
+
+## start test container/pod
+## curlimages/curl:7.78.0 which includes curl inside
+## delete/re-create test-continer to test curl command
+## test your hello-app pods/deployment by using LB service IP
+
+PS C:\Users\anil\k8sTrials> kubectl apply -f .\hello_app_test.yaml
+pod/hello-app-test-pod created
+PS C:\Users\anil\k8sTrials>
+PS C:\Users\anil\k8sTrials> kubectl logs hello-app-test-pod
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    77  100    77    0     0  45374      0 --:--:-- --:--:-- --:--:-- 77000
+Hello, world!
+Version: 2.0.0
+Hostname: hello-app-deployment-76f778987d-wn544
+
+PS C:\Users\anil\k8sTrials>
+PS C:\Users\anil\k8sTrials> kubectl delete -f .\hello_app_test.yaml
+pod "hello-app-test-pod" deleted
+PS C:\Users\anil\k8sTrials>
+PS C:\Users\anil\k8sTrials> kubectl apply -f .\hello_app_test.yaml
+pod/hello-app-test-pod created
+PS C:\Users\anil\k8sTrials>
+PS C:\Users\anil\k8sTrials> kubectl logs hello-app-test-pod
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    77  100    77    0     0  63011      0 --:--:-- --:--:-- --:--:-- 77000
+Hello, world!
+Version: 2.0.0
+Hostname: hello-app-deployment-76f778987d-wn544
+
+PS C:\Users\anil\k8sTrials>
+PS C:\Users\anil\k8sTrials> kubectl delete -f .\hello_app_test.yaml
+pod "hello-app-test-pod" deleted
+PS C:\Users\anil\k8sTrials> kubectl apply -f .\hello_app_test.yaml
+pod/hello-app-test-pod created
+PS C:\Users\anil\k8sTrials> kubectl logs hello-app-test-pod
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+Hello, world!
+Version: 2.0.0
+Hostname: hello-app-deployment-76f778987d-kpdd4
+100    77  100    77    0     0  53921      0 --:--:-- --:--:-- --:--:-- 77000
+PS C:\Users\anil\k8sTrials>
