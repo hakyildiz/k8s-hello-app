@@ -1,6 +1,6 @@
 ## Kubernetes example hello-app
 
-This repository Kubernetes example with deployment and LoadBalancer service.
+This repository includes Kubernetes example with deployment and LoadBalancer service.
 * hello-app deployed by using yaml-file with deployment/replicas:3
 	* hello-app image: gcr.io/google-samples/hello-app:2.0
 	* yaml file name for deployment: `hello_app_deployment.yaml`
